@@ -49,3 +49,4 @@ output/
 # Environment
 .env
 .env.local
+test_projects/

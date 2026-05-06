@@ -72,6 +72,19 @@ def detect_framework(files: list[Path]) -> Optional[str]:
         # PlatformIO
         if (root / "platformio.ini").exists():
             return "platformio"
+        
+        # STM32 HAL (check for HAL headers or .ioc files)
+        for hal_file in list(root.glob("*.ioc")) + list(root.glob("**/stm32f*_hal_conf.h")):
+            return "stm32-hal"
+        
+        # RP2040 Pico SDK
+        for pico in list(root.glob("pico_sdk_import.cmake")) + list(root.glob("CMakeLists.txt")):
+            try:
+                content = pico.read_text(errors="ignore")[:2000]
+                if "pico_sdk" in content:
+                    return "pico-sdk"
+            except OSError:
+                continue
     
     # 检测 .ino 文件
     if any(f.suffix == ".ino" for f in files):

@@ -111,6 +111,9 @@ class CodeParser:
         "RP2040": [r"RP2040", r"raspberry_pi_pico", r"pico"],
         "ATmega328P": [r"ATmega328[Pp]", r"Arduino\s+Uno", r"BOARD_UNO"],
         "ATmega2560": [r"ATmega2560", r"Arduino\s+Mega"],
+        "ATmega32U4": [r"ATmega32U4", r"Arduino\s+(Leonardo|Micro|Pro\s+Micro)", r"BOARD_LEONARDO"],
+        "nRF52840": [r"nRF52840", r"NRF52840"],
+        "nRF52832": [r"nRF52832", r"NRF52832"],
         "STM32": [r"STM32"],  # 通用STM32兜底
     }
     
@@ -135,6 +138,8 @@ class CodeParser:
         # Arduino
         r"SPI\.begin|SPI\.transfer": [PeripheralType.SPI],
         r"Wire\.begin|Wire\.requestFrom": [PeripheralType.I2C],
+        r"[\"<]Wire\.h[\">]": [PeripheralType.I2C],
+        r"[\"<]SPI\.h[\">]": [PeripheralType.SPI],
         r"Serial\.begin|Serial[0-9]\.begin": [PeripheralType.UART],
         r"analogRead|analogWrite": [PeripheralType.ADC],
         r"analogWrite.*PWM": [PeripheralType.PWM],
@@ -142,6 +147,25 @@ class CodeParser:
         # Zephyr
         r"spi_.*_config|SPI_.*_DT": [PeripheralType.SPI],
         r"i2c_.*_config|I2C_.*_DT": [PeripheralType.I2C],
+        # STM32 HAL
+        r"HAL_I2C_[A-Z]|hi2c\d": [PeripheralType.I2C],
+        r"HAL_SPI_[A-Z]|hspi\d": [PeripheralType.SPI],
+        r"HAL_UART_[A-Z]|huart\d": [PeripheralType.UART],
+        r"HAL_ADC_[A-Z]|hadc\d": [PeripheralType.ADC],
+        r"HAL_TIM_PWM|htim\d|HAL_DAC_": [PeripheralType.PWM],
+        r"HAL_GPIO_[A-Z]": [PeripheralType.GPIO],
+        r"HAL_SD_|h_sdmmc|HAL_SDIO_": [PeripheralType.SDIO],
+        r"HAL_USB_": [PeripheralType.USB],
+        # STM32 寄存器级操作 (NOHAL)
+        r"I2C\d?->CR\d|SPI\d?->CR\d|USART\d?->|ADC\d?->": [PeripheralType.GPIO],
+        r"I2C\d->SR\d|I2C\d->DR": [PeripheralType.I2C],
+        r"SPI\d->DR|SPI\d->SR": [PeripheralType.SPI],
+        # RP2040 Pico SDK
+        r"i2c_init|pico_i2c|i2c_write_blocking": [PeripheralType.I2C],
+        r"spi_init|pico_spi|spi_write_blocking": [PeripheralType.SPI],
+        r"uart_init|pico_uart|uart_putc": [PeripheralType.UART],
+        r"adc_init|pico_adc|adc_read": [PeripheralType.ADC],
+        r"pwm_set_gpio_level|pwm_init|pico_pwm": [PeripheralType.PWM],
         # MicroPython
         r"machine\.SPI|machine\.SoftSPI": [PeripheralType.SPI],
         r"machine\.I2C|machine\.SoftI2C": [PeripheralType.I2C],
@@ -158,6 +182,8 @@ class CodeParser:
         r"ST7920|LCD12864": (ComponentType.DISPLAY, "LCD12864 中文字符屏", 0.90),
         r"TM1637|tm1637": (ComponentType.DISPLAY, "TM1637 4位数码管", 0.90),
         r"MAX7219|max7219": (ComponentType.DISPLAY, "MAX7219 LED点阵驱动", 0.90),
+        r"LCD1602|lcd1602|LiquidCrystal_I2C|PCF8574": (ComponentType.DISPLAY, "1602字符LCD (I2C/并行)", 0.90),
+        r"SSD1351|ssd1351": (ComponentType.DISPLAY, "SSD1351 1.5寸OLED (SPI)", 0.90),
         r"WS2812|ws2812|NeoPixel|neopixel": (ComponentType.LED, "WS2812 全彩LED灯带", 0.95),
         # 传感器
         r"DHT\d+|dht_\d+|DHT sensor": (ComponentType.SENSOR, "DHT系列温湿度传感器", 0.95),
@@ -173,7 +199,7 @@ class CodeParser:
         r"AHT10|aht10|AHT20|aht20": (ComponentType.SENSOR, "AHT系列温湿度传感器", 0.90),
         # 无线
         r"WiFi\.begin|esp_wifi|WIFI": (ComponentType.WIRELESS, "WiFi模块 (ESP32内置)", 0.99),
-        r"BLE|bluetooth|esp_ble|NimBLE": (ComponentType.WIRELESS, "蓝牙BLE (ESP32内置)", 0.99),
+        r"\bBLE\b|\bbluetooth\b|\besp_ble\b|\bNimBLE\b": (ComponentType.WIRELESS, "蓝牙BLE模块", 0.99),
         r"LoRa|lora|SX1278|sx1278": (ComponentType.WIRELESS, "LoRa无线模块", 0.90),
         r"NRF24|nrf24": (ComponentType.WIRELESS, "NRF24L01 无线模块", 0.90),
         r"MQTT|mqtt_client": (ComponentType.WIRELESS, "MQTT协议栈", 0.85),
@@ -188,6 +214,7 @@ class CodeParser:
         r"SD_?card|fatfs|f_mount|SD_MMC": (ComponentType.STORAGE, "SD卡/TF卡", 0.90),
         r"SPIFFS|spiffs|LittleFS|littlefs|nvs_": (ComponentType.STORAGE, "Flash存储", 0.85),
         r"W25Q|w25q|AT24C|at24c": (ComponentType.STORAGE, "外部Flash/EEPROM", 0.90),
+        r"u8g2|U8G2|U8x8": (ComponentType.DISPLAY, "u8g2通用显示库(支持多屏)", 0.85),
         # 其他
         r"servo|Servo|SERVO": (ComponentType.MOTOR, "舵机", 0.85),
         r"stepper|Stepper": (ComponentType.MOTOR, "步进电机", 0.85),
@@ -223,11 +250,14 @@ class CodeParser:
     
     def detect_mcu(self) -> str:
         """检测MCU型号"""
-        # 优先从CMakeLists/sdkconfig中检测
-        for cmake in self.files:
-            if cmake.name in ("CMakeLists.txt", "sdkconfig"):
-                content = self._read_file(cmake)
+        # 优先从配置文件中检测（sdkconfig, .ioc等可能不在代码文件列表中）
+        config_patterns = ["sdkconfig", "*.ioc", "CMakeLists.txt"]
+        for cfg in config_patterns:
+            for f in self.directory.rglob(cfg):
+                content = self._read_file(f)
                 for mcu, patterns in self.MCU_PATTERNS.items():
+                    if mcu == "STM32":
+                        continue
                     for p in patterns:
                         if re.search(p, content):
                             return mcu
@@ -265,22 +295,17 @@ class CodeParser:
         for pattern, (ctype, desc, confidence) in self.COMPONENT_PATTERNS.items():
             matches = self._search_all_files(pattern)
             if matches:
-                # 用正则的第一个分组作为key去重
-                key = pattern[:20]
+                # 从匹配文本中提取具体型号
+                match_text = matches[0][0]
+                cleaned = re.sub(r"[^a-zA-Z0-9-]", "", match_text)
+                likely = cleaned if cleaned else ""
+                name = likely if likely else desc.split("(")[0].strip()
+                key = f"{ctype.value}:{name}"
+
                 if key not in components:
-                    match_text = matches[0][0]
                     source = str(matches[0][1].relative_to(self.directory))
-                    
-                    # 尝试提取具体型号
-                    likely = ""
-                    for mcu_p, _ in self.MCU_PATTERNS.items():
-                        continue
-                    # 从匹配文本中提取型号
-                    cleaned = re.sub(r"[^a-zA-Z0-9-]", "", match_text)
-                    likely = cleaned if cleaned else ""
-                    
                     components[key] = DetectedComponent(
-                        name=key,
+                        name=name,
                         type=ctype,
                         description=desc,
                         likely_part=likely,
