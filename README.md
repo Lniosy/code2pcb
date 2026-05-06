@@ -8,6 +8,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)]()
 
+## ✨ 效果预览
+
+**Arduino + DHT22 温湿度传感器**
+
+![Arduino DHT22 Schematic Preview](docs/preview_arduino.png)
+
+**STM32F103 + BME280 传感器**
+
+![STM32 BME280 Schematic Preview](docs/preview_stm32.png)
+
 ---
 
 ## 🎯 这是什么？
