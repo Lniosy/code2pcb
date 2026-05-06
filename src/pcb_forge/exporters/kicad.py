@@ -163,7 +163,7 @@ class KiCadExporter:
         routing: Optional[RoutingResult] = None,
     ) -> str:
         """
-        导出KiCad PCB文件 (.kicad_pcb)。
+        导出KiCad PCB文件 (.kicad_pcb) — 含真实焊盘、丝印、走线。
         
         Args:
             output_dir: 输出目录
@@ -173,11 +173,25 @@ class KiCadExporter:
         Returns:
             输出文件路径
         """
+        from .footprints import get_footprint_def
+        
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"{self.design.title}.kicad_pcb")
         
         board_w = placement.board_width if placement else 100.0
         board_h = placement.board_height if placement else 80.0
+        
+        # 构建网络表
+        net_map: dict[str, int] = {"": 0, "VCC": 1, "GND": 2}
+        # 从 design.nets 补充
+        for net in self.design.nets:
+            if net.name not in net_map:
+                net_map[net.name] = len(net_map)
+        # 从 routing 补充信号网络
+        if routing:
+            for track in routing.tracks:
+                if track.net and track.net not in net_map:
+                    net_map[track.net] = len(net_map)
         
         lines: list[str] = []
         lines.append(f'(kicad_pcb (version 20221018) (generator "code2pcb v0.1.0")')
@@ -185,66 +199,169 @@ class KiCadExporter:
         lines.append(f'  (general (thickness 1.6))')
         lines.append("")
         
+        # 纸张
+        lines.append(f'  (paper "A4")')
+        lines.append("")
+        
+        # 层定义
+        layers = [
+            (0, "F.Cu", "signal"),
+            (31, "B.Cu", "signal"),
+            (32, "B.Adhes", "user"),
+            (33, "F.Adhes", "user"),
+            (34, "B.Paste", "user"),
+            (35, "F.Paste", "user"),
+            (36, "B.SilkS", "user"),
+            (37, "F.SilkS", "user"),
+            (38, "B.Mask", "user"),
+            (39, "F.Mask", "user"),
+            (40, "Dwgs.User", "user"),
+            (41, "Cmts.User", "user"),
+            (42, "Eco1.User", "user"),
+            (43, "Eco2.User", "user"),
+            (44, "Edge.Cuts", "user"),
+            (45, "Margin", "user"),
+            (46, "B.CrtYd", "user"),
+            (47, "F.CrtYd", "user"),
+            (48, "B.Fab", "user"),
+            (49, "F.Fab", "user"),
+        ]
+        lines.append(f'  (layers')
+        for code, name, layer_type in layers:
+            lines.append(f'    (layer {code} "{name}" {layer_type} (layer_type {layer_type}))')
+        lines.append(f'  )')
+        lines.append("")
+        
         # 板子边框
         margin = 2.0
-        lines.append(f'  (gr_line (start {margin} {margin}) (end {board_w - margin} {margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{generate_uuid()}"))')
-        lines.append(f'  (gr_line (start {board_w - margin} {margin}) (end {board_w - margin} {board_h - margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{generate_uuid()}"))')
-        lines.append(f'  (gr_line (start {board_w - margin} {board_h - margin}) (end {margin} {board_h - margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{generate_uuid()}"))')
-        lines.append(f'  (gr_line (start {margin} {board_h - margin}) (end {margin} {margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{generate_uuid()}"))')
+        edge_uuids = [generate_uuid() for _ in range(4)]
+        lines.append(f'  (gr_line (start {margin} {margin}) (end {board_w - margin} {margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{edge_uuids[0]}"))')
+        lines.append(f'  (gr_line (start {board_w - margin} {margin}) (end {board_w - margin} {board_h - margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{edge_uuids[1]}"))')
+        lines.append(f'  (gr_line (start {board_w - margin} {board_h - margin}) (end {margin} {board_h - margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{edge_uuids[2]}"))')
+        lines.append(f'  (gr_line (start {margin} {board_h - margin}) (end {margin} {margin}) (layer "Edge.Cuts") (width 0.1) (tstamp "{edge_uuids[3]}"))')
         lines.append("")
         
-        # 板子尺寸
-        lines.append(f'    (setup')
-        lines.append(f'      (pad_to_mask_clearance 0.05)')
-        lines.append(f'      (pcbplotparams')
-        lines.append(f'        (layerselection 0x00010fc_ffffffff)')
-        lines.append(f'        (plotframeref false)')
-        lines.append(f'        (usegerberextensions false)')
-        lines.append(f'        (usegerberattributes true)')
-        lines.append(f'        (usegerberadvancedattributes true)')
-        lines.append(f'        (creategerberjobfile true)')
-        lines.append(f'        (dashed_line_dash_ratio 12.000000)')
-        lines.append(f'        (dashed_line_gap_ratio 3.000000)')
-        lines.append(f'        (svgprecision 6)')
-        lines.append(f'        (plotframeref false)')
-        lines.append(f'        (mode 1)')
-        lines.append(f'        (useauxorigin false)')
-        lines.append(f'        (hpglpennumber 1)')
-        lines.append(f'        (hpglpenspeed 20)')
-        lines.append(f'        (hpglpendiameter 15.000000)')
-        lines.append(f'        (drcpolygon true)')
-        lines.append(f'        (drcminmillesspace 0.5)')
-        lines.append(f'      )')
+        # Setup
+        lines.append(f'  (setup')
+        lines.append(f'    (pad_to_mask_clearance 0.05)')
+        lines.append(f'    (grid_origin 0 0)')
+        lines.append(f'    (pcbplotparams')
+        lines.append(f'      (layerselection 0x00010fc_ffffffff)')
+        lines.append(f'      (plotframeref false)')
+        lines.append(f'      (usegerberextensions false)')
+        lines.append(f'      (usegerberattributes true)')
+        lines.append(f'      (usegerberadvancedattributes true)')
+        lines.append(f'      (creategerberjobfile true)')
+        lines.append(f'      (dashed_line_dash_ratio 12.000000)')
+        lines.append(f'      (dashed_line_gap_ratio 3.000000)')
+        lines.append(f'      (svgprecision 6)')
+        lines.append(f'      (plotframeref false)')
+        lines.append(f'      (mode 1)')
+        lines.append(f'      (useauxorigin false)')
+        lines.append(f'      (hpglpennumber 1)')
+        lines.append(f'      (hpglspeed 20)')
+        lines.append(f'      (hpglpeldiameter 15.000000)')
+        lines.append(f'      (drcpolygon true)')
+        lines.append(f'      (drcminmillesspace 0.5)')
         lines.append(f'    )')
+        lines.append(f'  )')
         lines.append("")
         
-        # 网络段
-        lines.append('  (net 0 "")')
-        lines.append('  (net 1 "VCC")')
-        lines.append('  (net 2 "GND")')
+        # 网络声明
+        for net_name, net_code in sorted(net_map.items(), key=lambda x: x[1]):
+            lines.append(f'  (net {net_code} "{net_name}")')
         lines.append("")
         
-        # 器件（Footprint占位）
+        # 器件封装（真实焊盘）
         if placement:
             for comp in placement.components:
+                fp_uuid = generate_uuid()
                 lines.append(f'  (footprint "{comp.footprint}" (layer "F.Cu")')
-                lines.append(f'    (tstamp "{generate_uuid()}")')
+                lines.append(f'    (tstamp "{fp_uuid}")')
                 lines.append(f'    (at {comp.x:.2f} {comp.y:.2f} {comp.rotation:.0f})')
+                lines.append(f'    (descr "{comp.footprint}")')
+                lines.append(f'    (tags "code2pcb")')
+                
+                # Reference
                 lines.append(f'    (fp_text reference "{comp.reference}" (at 0 -2 0)')
                 lines.append(f'      (layer "F.SilkS")')
                 lines.append(f'      (effects (font (size 1 1) (thickness 0.15))))')
+                # Value
                 lines.append(f'    (fp_text value "{comp.value}" (at 0 2 0)')
                 lines.append(f'      (layer "F.Fab")')
                 lines.append(f'      (effects (font (size 1 1) (thickness 0.15))))')
-                lines.append('    (pad "" smd roundrect (at 0 0) (size 1 1) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))')
+                
+                # 获取封装定义，生成真实焊盘
+                fp_def = get_footprint_def(comp.footprint)
+                if fp_def:
+                    # Court yard
+                    cx, cy = fp_def.courtyard[:2]
+                    cw, ch = fp_def.courtyard[2:]
+                    lines.append(f'    (fp_poly (pts')
+                    pad_cu = fp_def.courtyard[2]
+                    pad_cv = fp_def.courtyard[3]
+                    for px, py in [
+                        (cx, cy), (cx + cw, cy), (cx + cw, cy + ch), (cx, cy + ch)
+                    ]:
+                        lines.append(f'      (xy {px:.2f} {py:.2f})')
+                    lines.append(f'    ) (layer "F.CrtYd") (width 0.05) (fill none) (tstamp "{generate_uuid()}"))')
+                    
+                    # Body silkscreen
+                    if fp_def.body_rect:
+                        bx, by, bw, bh = fp_def.body_rect
+                        lines.append(f'    (fp_rect (start {bx:.2f} {by:.2f}) (end {bx + bw:.2f} {by + bh:.2f})')
+                        lines.append(f'      (layer "F.SilkS") (width 0.12) (fill none) (tstamp "{generate_uuid()}"))')
+                    
+                    # Pads
+                    for i, pad in enumerate(fp_def.pads):
+                        pad_uuid = generate_uuid()
+                        layers_str = " ".join(f'"{l}"' for l in pad.layers)
+                        
+                        # 分配网络：pin 1→VCC, pin 2→GND（简化示意）
+                        net_code = 0
+                        if i == 0 and "VCC" in net_map:
+                            net_code = net_map["VCC"]
+                        elif i == 1 and "GND" in net_map:
+                            net_code = net_map["GND"]
+                        
+                        if pad.pad_type == "tht":
+                            drill_str = f'(drill {pad.drill:.2f})' if pad.drill else ""
+                            lines.append(f'    (pad "{pad.name}" {pad.pad_type} {pad.shape} (at {pad.at[0]:.2f} {pad.at[1]:.2f}) (size {pad.size[0]:.2f} {pad.size[1]:.2f}) {drill_str} (layers {layers_str}) (net {net_code}) (tstamp "{pad_uuid}"))')
+                        elif pad.shape == "circle":
+                            lines.append(f'    (pad "{pad.name}" {pad.pad_type} {pad.shape} (at {pad.at[0]:.2f} {pad.at[1]:.2f}) (size {pad.size[0]:.2f} {pad.size[1]:.2f}) (layers {layers_str}) (net {net_code}) (tstamp "{pad_uuid}"))')
+                        else:
+                            rr = pad.roundrect_rratio
+                            lines.append(f'    (pad "{pad.name}" {pad.pad_type} {pad.shape} (at {pad.at[0]:.2f} {pad.at[1]:.2f}) (size {pad.size[0]:.2f} {pad.size[1]:.2f}) (layers {layers_str}) (roundrect_rratio {rr}) (net {net_code}) (tstamp "{pad_uuid}"))')
+                else:
+                    # Fallback: 单个焊盘
+                    lines.append(f'    (pad "1" smd roundrect (at 0 0) (size 1 1) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25) (net {net_map.get("VCC", 0)}) (tstamp "{generate_uuid()}"))')
+                
                 lines.append('  )')
                 lines.append("")
         
         # 走线
         if routing:
             for track in routing.tracks:
-                lines.append(f'  (segment (start {track.start_x:.2f} {track.start_y:.2f}) (end {track.end_x:.2f} {track.end_y:.2f}) (width {track.width:.2f}) (layer "{track.layer}") (net {1 if track.net == "VCC" else 2}))')
+                net_code = net_map.get(track.net, 0)
+                lines.append(f'  (segment (start {track.start_x:.2f} {track.start_y:.2f}) (end {track.end_x:.2f} {track.end_y:.2f}) (width {track.width:.2f}) (layer "{track.layer}") (net {net_code}))')
+            
+            # 过孔
+            for via in routing.vias:
+                via_uuid = generate_uuid()
+                lines.append(f'  (via (at {via.x:.2f} {via.y:.2f}) (size {via.size:.2f}) (drill {via.drill:.2f}) (layers "F.Cu" "B.Cu") (net {net_map.get("VCC", 0)}) (tstamp "{via_uuid}"))')
+            
             lines.append("")
+        
+        # 目标 / 网络
+        lines.append('  (target')
+        lines.append(f'    (at {board_w / 2:.2f} {board_h / 2:.2f} 0)')
+        lines.append(f'    (size 1.27 1.27)')
+        lines.append(f'    (layers "F.Cu" "F.Mask")')
+        lines.append(f'    (net {net_map.get("GND", 2)})')
+        lines.append(f'    (tstamp "{generate_uuid()}")')
+        lines.append(f'    (drill raw 0.8)')
+        lines.append(f'  )')
+        lines.append("")
         
         lines.append(')')
         

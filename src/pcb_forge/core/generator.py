@@ -283,7 +283,8 @@ class SchemaGenerator:
     def _add_peripheral_circuits(self):
         """根据使用的外设添加必要的被动器件"""
         for periph in self.spec.peripherals:
-            if periph.type == PeripheralType.I2C:
+            periph_type = periph if isinstance(periph, PeripheralType) else periph.type
+            if periph_type == PeripheralType.I2C:
                 # I2C上拉电阻
                 for _ in range(2):
                     r = SchematicComponent(

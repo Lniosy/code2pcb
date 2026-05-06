@@ -10,6 +10,8 @@
 
 ## ✨ 效果预览
 
+### 原理图 Schematic
+
 **Arduino + DHT22 温湿度传感器**
 
 ![Arduino DHT22 Schematic Preview](docs/preview_arduino.png)
@@ -17,6 +19,15 @@
 **STM32F103 + BME280 传感器**
 
 ![STM32 BME280 Schematic Preview](docs/preview_stm32.png)
+
+### PCB 布局 Layout
+
+**ESP32-S3 + SSD1306 OLED — PCB 3D 视角预览**
+
+![PCB Layout Preview](docs/preview_pcb.png)
+
+> PCB 布局含真实焊盘定义（LQFP-56/QFP-48 等 SMD + THT 封装）、电源走线、丝印标注、装配框。
+> 导出为标准 `.kicad_pcb` 文件，可用 KiCad 直接打开编辑。SVG 矢量预览可通过 `PCBPreviewRenderer` API 生成。
 
 ---
 
@@ -36,7 +47,8 @@ code2pcb 是一个面向中文硬件开发者的 AI PCB 设计工具。输入你
 | 💬 自然语言→PCB | ✅ v0.1.0 | 中文描述即可生成电路板设计 |
 | 📐 智能布局 | ✅ v0.1.0 | 基于规则的功能分区自动布局 |
 | 🛤️ 自动布线 | 🔨 v0.1.0 | 示意布线（v1.0集成Freerouting引擎） |
-| 📄 KiCad导出 | ✅ v0.1.0 | 输出.kicad_sch和.kicad_pcb文件 |
+| 📄 KiCad导出 | ✅ v0.1.0 | 输出.kicad_sch和.kicad_pcb（含真实焊盘+走线） |
+| 🎨 PCB预览 | ✅ v0.1.0 | SVG/PNG矢量渲染（经典绿色PCB风格） |
 | 🤖 MCP Server | ✅ v0.1.0 | AI Agent原生集成 |
 | 📚 器件知识库 | ✅ v0.1.0 | 内置常用器件参数+立创商城SKU |
 | 🔬 SI/PI分析 | 🔜 v1.0.0 | 信号完整性/电源完整性分析 |
