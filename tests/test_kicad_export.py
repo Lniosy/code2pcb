@@ -51,7 +51,7 @@ class TestKiCadExporter:
             
             content = Path(output_path).read_text()
             assert "kicad_sch" in content
-            assert "PCB Forge" in content
+            assert "code2pcb" in content
             assert "VCC" in content
             assert "GND" in content
     

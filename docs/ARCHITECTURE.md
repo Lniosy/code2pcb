@@ -2,7 +2,7 @@
 
 ## 系统总览
 
-PCB Forge 采用分层架构，每一层可独立替换和升级：
+code2pcb 采用分层架构，每一层可独立替换和升级：
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -10,7 +10,7 @@ PCB Forge 采用分层架构，每一层可独立替换和升级：
 │                                                          │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
 │  │  CLI (Typer) │  │  MCP Server  │  │  Python API  │   │
-│  │  pcb-forge   │  │  stdio/HTTP  │  │  import forge │  │
+│  │  code2pcb   │  │  stdio/HTTP  │  │  import forge │  │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘   │
 │         │                 │                 │            │
 ├─────────┼─────────────────┼─────────────────┼────────────┤
@@ -185,12 +185,12 @@ patterns/
 
 ## KiCad文件格式
 
-PCB Forge直接生成KiCad S-expression格式文件，兼容KiCad 8/9。
+code2pcb直接生成KiCad S-expression格式文件，兼容KiCad 8/9。
 
 ### .kicad_sch（原理图）
 
 ```
-(kicad_sch (version 20231120) (generator "PCB Forge v0.1.0")
+(kicad_sch (version 20231120) (generator "code2pcb v0.1.0")
   (uuid "...")
   (paper "A4")
   (title_block (title "...") (date "...") (rev "0.1.0"))
@@ -207,7 +207,7 @@ PCB Forge直接生成KiCad S-expression格式文件，兼容KiCad 8/9。
 ### .kicad_pcb（PCB布局）
 
 ```
-(kicad_pcb (version 20221018) (generator "PCB Forge v0.1.0")
+(kicad_pcb (version 20221018) (generator "code2pcb v0.1.0")
   (general (thickness 1.6))
   (gr_line ... (layer "Edge.Cuts"))   # 板框
   (net 1 "VCC")

@@ -69,7 +69,7 @@ class PeripheralUsage:
 class HardwareSpec:
     """
     硬件规格 — 代码解析的完整输出。
-    这是 PCB Forge 的核心数据结构，贯穿整个设计流水线。
+    这是 code2pcb 的核心数据结构，贯穿整个设计流水线。
     """
     name: str = "unnamed"
     mcu: str = ""  # 如 "ESP32-S3", "STM32F103C8T6"

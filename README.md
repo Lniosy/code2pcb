@@ -1,4 +1,4 @@
-# PCB Forge 🔧⚡
+# code2pcb 🔧⚡
 
 > AI驱动的开源PCB设计工具 — 代码/自然语言到电路板的全自动生成
 
@@ -12,7 +12,7 @@
 
 ## 🎯 这是什么？
 
-PCB Forge 是一个面向中文硬件开发者的 AI PCB 设计工具。输入你的嵌入式代码仓库或自然语言描述，自动完成：
+code2pcb 是一个面向中文硬件开发者的 AI PCB 设计工具。输入你的嵌入式代码仓库或自然语言描述，自动完成：
 
 ```
 代码/文字 → 硬件需求分析 → 原理图生成 → 智能布局 → 自动布线 → KiCad文件 → 打样
@@ -46,12 +46,12 @@ pip install -e ".[dev]"
 
 ```bash
 # 分析你的嵌入式项目，自动推断硬件需求
-pcb-forge analyze ./my-esp32-project/
+code2pcb analyze ./my-esp32-project/
 ```
 
 输出示例：
 ```
-🔍 PCB Forge v0.1.0 — 代码分析报告
+🔍 code2pcb v0.1.0 — 代码分析报告
 ═════════════════════════════════════════
 📁 项目: my-esp32-project
 🔧 框架: esp-idf
@@ -67,13 +67,13 @@ pcb-forge analyze ./my-esp32-project/
 ### 从自然语言生成PCB
 
 ```bash
-pcb-forge text2pcb "做一个ESP32温湿度传感器，OLED显示，电池供电，Type-C充电"
+code2pcb text2pcb "做一个ESP32温湿度传感器，OLED显示，电池供电，Type-C充电"
 ```
 
 ### 从代码直接生成PCB
 
 ```bash
-pcb-forge code2pcb ./my-esp32-project/ --output ./output/
+code2pcb code2pcb ./my-esp32-project/ --output ./output/
 ```
 
 ### MCP Server（AI Agent集成）
@@ -82,8 +82,8 @@ pcb-forge code2pcb ./my-esp32-project/ --output ./output/
 ```json
 {
   "mcpServers": {
-    "pcb-forge": {
-      "command": "pcb-forge",
+    "code2pcb": {
+      "command": "code2pcb",
       "args": ["mcp"]
     }
   }
@@ -95,7 +95,7 @@ pcb-forge code2pcb ./my-esp32-project/ --output ./output/
 ```
 ┌──────────────────────────────────────────────────┐
 │                    用户接口                        │
-│   CLI (pcb-forge)  │  MCP Server  │  Python API  │
+│   CLI (code2pcb)  │  MCP Server  │  Python API  │
 ├──────────────────────────────────────────────────┤
 │                    AI 引擎层                       │
 │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐    │
@@ -118,7 +118,7 @@ pcb-forge code2pcb ./my-esp32-project/ --output ./output/
 ## 📁 项目结构
 
 ```
-pcb-forge/
+code2pcb/
 ├── src/pcb_forge/           # 核心源码
 │   ├── cli/main.py          # CLI入口 (Typer)
 │   ├── core/

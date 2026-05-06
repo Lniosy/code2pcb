@@ -63,7 +63,7 @@ class SchemaGenerator:
     def __init__(self, spec: HardwareSpec):
         self.spec = spec
         self._ref_counters: dict[str, int] = {}
-        self._design = SchematicDesign(title=spec.name or "PCB Forge Design")
+        self._design = SchematicDesign(title=spec.name or "code2pcb Design")
     
     def _next_ref(self, prefix: str) -> str:
         """生成下一个引用编号，如 R1→R2, C1→C2"""
@@ -83,7 +83,7 @@ class SchemaGenerator:
         5. 添加必要的外围电路（上拉、滤波等）
         6. 生成网络连接
         """
-        self._design = SchematicDesign(title=self.spec.name or "PCB Forge Design")
+        self._design = SchematicDesign(title=self.spec.name or "code2pcb Design")
         
         # Step 1: MCU
         mcu_ref = self._add_mcu()

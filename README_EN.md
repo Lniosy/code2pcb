@@ -1,4 +1,4 @@
-# PCB Forge 🔧⚡
+# code2pcb 🔧⚡
 
 > AI-powered open-source PCB design tool — From code/natural language to circuit board in one step
 
@@ -8,7 +8,7 @@
 
 ## What is it?
 
-PCB Forge is an AI-driven PCB design tool for embedded developers. Feed it your firmware codebase or a natural language description, and it automatically generates:
+code2pcb is an AI-driven PCB design tool for embedded developers. Feed it your firmware codebase or a natural language description, and it automatically generates:
 
 ```
 Code/Text → Hardware Analysis → Schematic → Layout → Routing → KiCad Files → Fabrication
@@ -20,13 +20,13 @@ Code/Text → Hardware Analysis → Schematic → Layout → Routing → KiCad F
 pip install -e .
 
 # Analyze embedded code to detect hardware requirements
-pcb-forge analyze ./my-esp32-project/
+code2pcb analyze ./my-esp32-project/
 
 # Generate PCB from natural language
-pcb-forge text2pcb "ESP32 temperature sensor with OLED and battery"
+code2pcb text2pcb "ESP32 temperature sensor with OLED and battery"
 
 # Generate PCB from code repository
-pcb-forge code2pcb ./my-esp32-project/
+code2pcb code2pcb ./my-esp32-project/
 ```
 
 ## MCP Server
@@ -34,8 +34,8 @@ pcb-forge code2pcb ./my-esp32-project/
 ```json
 {
   "mcpServers": {
-    "pcb-forge": {
-      "command": "pcb-forge",
+    "code2pcb": {
+      "command": "code2pcb",
       "args": ["mcp"]
     }
   }

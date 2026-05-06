@@ -198,7 +198,7 @@ class LLMComponentSelector:
 
 ## 竞品对标计划
 
-| 能力 | PCB Forge v0.1 | Quilter | Flux.ai | 华秋Copilot | Trace |
+| 能力 | code2pcb v0.1 | Quilter | Flux.ai | 华秋Copilot | Trace |
 |------|:-:|:-:|:-:|:-:|:-:|
 | 代码解析 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | 自然语言→原理图 | 🔨 | ❌ | 部分 | 部分 | 部分 |

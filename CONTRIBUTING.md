@@ -1,19 +1,19 @@
 # 贡献指南
 
-感谢你对 PCB Forge 的关注！以下是参与贡献的方式。
+感谢你对 code2pcb 的关注！以下是参与贡献的方式。
 
 ## 开发环境搭建
 
 ```bash
 # 克隆项目
-git clone https://github.com/liunian/pcb-forge.git
-cd pcb-forge
+git clone https://github.com/liunian/code2pcb.git
+cd code2pcb
 
 # 安装依赖（开发模式）
 pip install -e ".[dev,llm]"
 
 # 验证安装
-pcb-forge --version
+code2pcb --version
 ```
 
 ## 项目结构

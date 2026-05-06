@@ -1,4 +1,4 @@
-"""MCP Server — 让AI Agent能直接操作PCB Forge"""
+"""MCP Server — 让AI Agent能直接操作code2pcb"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from ..knowledge.component import ComponentLibrary
 
 def create_server() -> FastMCP:
     """
-    创建PCB Forge MCP Server。
+    创建code2pcb MCP Server。
     
     暴露以下工具给AI Agent：
     - analyze_code: 分析代码仓库，推断硬件需求
@@ -29,19 +29,19 @@ def create_server() -> FastMCP:
     - list_peripherals: 列出检测到的外设
     
     使用方式：
-    1. 命令行: pcb-forge mcp
+    1. 命令行: code2pcb mcp
     2. Claude Desktop配置:
        {
          "mcpServers": {
-           "pcb-forge": {
-             "command": "pcb-forge",
+           "code2pcb": {
+             "command": "code2pcb",
              "args": ["mcp"]
            }
          }
        }
     """
     mcp = FastMCP(
-        name="PCB Forge",
+        name="code2pcb",
         version=__version__,
     )
     
@@ -181,9 +181,9 @@ def create_server() -> FastMCP:
     
     @mcp.tool()
     def get_version() -> str:
-        """获取PCB Forge版本信息"""
+        """获取code2pcb版本信息"""
         return json.dumps({
-            "name": "PCB Forge",
+            "name": "code2pcb",
             "version": __version__,
             "description": "AI驱动的开源PCB设计工具",
             "author": "Liunian",
