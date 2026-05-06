@@ -22,12 +22,11 @@
 
 ### PCB 布局 Layout
 
-**ESP32-S3 + SSD1306 OLED — PCB 3D 视角预览**
+**ESP32-S3 + SSD1306 OLED — PCB 布局与布线预览**
 
 ![PCB Layout Preview](docs/preview_pcb.png)
 
-> PCB 布局含真实焊盘定义（LQFP-56/QFP-48 等 SMD + THT 封装）、电源走线、丝印标注、装配框。
-> 导出为标准 `.kicad_pcb` 文件，可用 KiCad 直接打开编辑。SVG 矢量预览可通过 `PCBPreviewRenderer` API 生成。
+> PCB 布局含真实焊盘定义（LQFP-56/QFP-48 等 SMD + THT 封装）、电源分配网络（🟠VCC/🔴GND）、信号走线（🔵I2C）、丝印标注、装配框。
 
 ---
 
@@ -46,7 +45,7 @@ code2pcb 是一个面向中文硬件开发者的 AI PCB 设计工具。输入你
 | 🔍 代码解析 | ✅ v0.1.0 | 分析嵌入式代码，自动推断MCU/外设/器件 |
 | 💬 自然语言→PCB | ✅ v0.1.0 | 中文描述即可生成电路板设计 |
 | 📐 智能布局 | ✅ v0.1.0 | 基于规则的功能分区自动布局 |
-| 🛤️ 自动布线 | 🔨 v0.1.0 | 示意布线（v1.0集成Freerouting引擎） |
+| 🛤️ 自动布线 | ✅ v0.1.0 | 4阶段曼哈顿布线（电源主干→分配→信号→自动连接） |
 | 📄 KiCad导出 | ✅ v0.1.0 | 输出.kicad_sch和.kicad_pcb（含真实焊盘+走线） |
 | 🎨 PCB预览 | ✅ v0.1.0 | SVG/PNG矢量渲染（经典绿色PCB风格） |
 | 🤖 MCP Server | ✅ v0.1.0 | AI Agent原生集成 |

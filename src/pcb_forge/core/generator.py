@@ -301,17 +301,77 @@ class SchemaGenerator:
                 pass
     
     def _generate_nets(self):
-        """生成网络连接（Phase 2 将基于真实引脚映射）"""
-        # v0.1.0: 生成基本的电源网络
-        self._design.nets.append(SchematicNet(name="VCC", pins=[]))
-        self._design.nets.append(SchematicNet(name="GND", pins=[]))
+        """生成网络连接 — 基于器件引脚的 VCC/GND/信号分配"""
+        # 电源网络
+        vcc_pins = []
+        gnd_pins = []
+        signal_nets: dict[str, list[str]] = {}
         
+        for comp in self._design.components:
+            ref = comp.reference
+            
+            if ref.startswith("U") and any(m in comp.value for m in ["ESP32", "STM32", "RP2040", "ATmega"]):
+                # MCU: pin1→VCC, pin2→GND
+                vcc_pins.append(f"{ref}.1")
+                gnd_pins.append(f"{ref}.2")
+            elif ref.startswith("Y"):
+                # 晶振: pin1,pin4→GND
+                gnd_pins.append(f"{ref}.1")
+                gnd_pins.append(f"{ref}.4")
+            elif ref.startswith("C"):
+                # 电容: pin1→VCC, pin2→GND
+                vcc_pins.append(f"{ref}.1")
+                gnd_pins.append(f"{ref}.2")
+            elif ref.startswith("R"):
+                # 上拉电阻: pin1→VCC
+                vcc_pins.append(f"{ref}.1")
+                # pin2 连接到信号网络
+                net_name = f"NET_{ref}_P2"
+                signal_nets[net_name] = [f"{ref}.2"]
+            elif ref.startswith("SW"):
+                # 按钮: pin1→GND
+                gnd_pins.append(f"{ref}.1")
+            elif ref.startswith("J"):
+                # 连接器: pin1→VCC, pin2→GND, pin3→信号
+                vcc_pins.append(f"{ref}.1")
+                gnd_pins.append(f"{ref}.2")
+                net_name = f"NET_{ref}_P3"
+                signal_nets[net_name] = [f"{ref}.3"]
+            else:
+                # 默认: pin1→VCC, pin2→GND
+                vcc_pins.append(f"{ref}.1")
+                gnd_pins.append(f"{ref}.2")
+        
+        # 信号网络连接：将上拉电阻/连接器连接到 MCU
+        mcu_ref = None
+        for comp in self._design.components:
+            if comp.reference.startswith("U") and any(m in comp.value for m in ["ESP32", "STM32", "RP2040", "ATmega"]):
+                mcu_ref = comp.reference
+                break
+        
+        if mcu_ref:
+            # 为每个信号网络添加 MCU 端连接
+            mcu_pin_counter = 3  # MCU pin3 起为信号脚
+            for net_name, pins in signal_nets.items():
+                pins.append(f"{mcu_ref}.{mcu_pin_counter}")
+                mcu_pin_counter += 1
+        
+        # 添加电源网络
+        self._design.nets.append(SchematicNet(name="VCC", pins=vcc_pins))
+        self._design.nets.append(SchematicNet(name="GND", pins=gnd_pins))
+        
+        # 添加输入电源网络
         if self.spec.voltage_supply:
             for v in self.spec.voltage_supply:
                 v_clean = v.replace(" ", "_").replace("(", "").replace(")", "")
                 self._design.nets.append(SchematicNet(name=f"VIN_{v_clean}", pins=[]))
         
+        # 添加信号网络
+        for net_name, pins in signal_nets.items():
+            self._design.nets.append(SchematicNet(name=net_name, pins=pins))
+        
         self._design.notes.append(
             f"📊 设计包含 {len(self._design.components)} 个器件, "
-            f"{len(self._design.nets)} 个网络"
+            f"{len(self._design.nets)} 个网络 "
+            f"(VCC:{len(vcc_pins)}pin, GND:{len(gnd_pins)}pin, 信号:{len(signal_nets)}net)"
         )

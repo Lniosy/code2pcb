@@ -23,15 +23,16 @@ class PCBRenderConfig:
     pad_color: str = "#c0c0c0"        # 焊盘银色
     pad_hole_color: str = "#1a1a1a"   # 钻孔黑色
     pad_smd_color: str = "#d4af37"    # SMD 焊盘金色
-    track_color: str = "#c0c0c0"      # 走线银色
+    track_color: str = "#4fc3f7"      # 信号走线亮蓝色
     track_power_color: str = "#ff6600" # 电源走线橙色
+    track_gnd_color: str = "#ff4444"  # GND走线红色
     via_color: str = "#d4af37"        # 过孔金色
     silk_color: str = "#ffffff"       # 丝印白色
     fab_color: str = "#00ff88"        # 装配层绿色
     courtyard_color: str = "#336633"  # 装配框
     body_color: str = "#2d5a2d"       # 器件本体
     text_color: str = "#ffffff"       # 标注文字
-    font_size: float = 1.2            # mm
+    font_size: float = 1.5            # mm (加大字号)
 
 
 class PCBPreviewRenderer:
@@ -103,6 +104,7 @@ class PCBPreviewRenderer:
         lines.append(f'    .pad-smd {{ fill: {cfg.pad_smd_color}; }}')
         lines.append(f'    .track {{ stroke: {cfg.track_color}; stroke-linecap: round; fill: none; }}')
         lines.append(f'    .track-power {{ stroke: {cfg.track_power_color}; stroke-linecap: round; fill: none; }}')
+        lines.append(f'    .track-gnd {{ stroke: {cfg.track_gnd_color}; stroke-linecap: round; fill: none; }}')
         lines.append(f'    .via {{ fill: {cfg.via_color}; }}')
         lines.append(f'    .via-hole {{ fill: {cfg.pad_hole_color}; }}')
         lines.append(f'    .silk {{ fill: none; stroke: {cfg.silk_color}; stroke-width: 0.3; }}')
@@ -133,9 +135,13 @@ class PCBPreviewRenderer:
         # 走线（底层，在焊盘下面）
         if self.routing:
             for track in self.routing.tracks:
-                is_power = track.net in ("VCC", "GND")
-                cls = "track-power" if is_power else "track"
-                w = self._mm_to_px(track.width)
+                if track.net == "VCC":
+                    cls = "track-power"
+                elif track.net == "GND":
+                    cls = "track-gnd"
+                else:
+                    cls = "track"
+                w = max(2, self._mm_to_px(track.width))  # 最小 2px 宽度
                 sx1, sy1 = self._mm_to_svg(track.start_x, track.start_y)
                 sx2, sy2 = self._mm_to_svg(track.end_x, track.end_y)
                 lines.append(f'  <line class="{cls}" x1="{sx1:.1f}" y1="{sy1:.1f}" x2="{sx2:.1f}" y2="{sy2:.1f}" stroke-width="{w:.1f}"/>')
@@ -288,8 +294,13 @@ class PCBPreviewRenderer:
         # 走线
         if self.routing:
             for track in self.routing.tracks:
-                color = cfg.track_power_color if track.net in ("VCC", "GND") else cfg.track_color
-                w = max(1, mm_to_px(track.width))
+                if track.net == "VCC":
+                    color = cfg.track_power_color
+                elif track.net == "GND":
+                    color = cfg.track_gnd_color
+                else:
+                    color = cfg.track_color
+                w = max(2, mm_to_px(track.width))
                 p1 = to_px(track.start_x, track.start_y)
                 p2 = to_px(track.end_x, track.end_y)
                 draw.line([p1, p2], fill=color, width=w)
