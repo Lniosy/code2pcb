@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "code2pcb"
-version = "0.1.0"
+version = "0.2.0"
 description = "AI驱动的开源PCB设计工具 — 代码/自然语言到电路板的全自动生成"
 readme = "README.md"
 license = {text = "MIT"}

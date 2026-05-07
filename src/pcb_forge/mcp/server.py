@@ -42,7 +42,6 @@ def create_server() -> FastMCP:
     """
     mcp = FastMCP(
         name="code2pcb",
-        version=__version__,
     )
     
     @mcp.tool()
